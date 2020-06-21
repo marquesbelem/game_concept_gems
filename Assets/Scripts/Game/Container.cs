@@ -5,11 +5,17 @@ using UnityEngine;
 public class Container : MonoBehaviour {
     private Rigidbody2D rgdb;
     private Collider2D collider2D;
+    private Vector2 direction;
     private void Start () {
         rgdb = GetComponent<Rigidbody2D> ();
         collider2D = GetComponent<Collider2D> ();
         DestroyComponents ();
+        // InvokeRepeating ("UpdateMineGem", 2f, 5f);
     }
+
+    /* private void Update () {
+          UpdateMineGem ();
+     }*/
     public void UpdateName (int x, int y) {
         gameObject.name = "[" + x + "][" + y + "]";
     }
@@ -17,21 +23,22 @@ public class Container : MonoBehaviour {
     public Gem MineGem () {
         if (gameObject.transform.childCount > 0)
             return gameObject.transform.GetChild (0).GetComponent<Gem> ();
-        else {
-            UpdateMineGem ();
-            return gameObject.transform.GetChild (0).GetComponent<Gem> ();
-        }
+
+        return null;
     }
 
-    public void UpdateMineGem () {
-        GameObject[] gems = GameObject.FindGameObjectsWithTag ("Gem");
+    public Gem UpdateMineGem () {
+        RaycastHit2D hit = Physics2D.Raycast (this.gameObject.transform.position, direction);
 
-        for (int i = 0; i < gems.Length; i++) {
-            if (Mathf.Round (gems[i].transform.TransformPoint (Vector3.zero).x) == Mathf.Round (gameObject.transform.position.x) &&
-                Mathf.Round (gems[i].transform.TransformPoint (Vector3.zero).y) == Mathf.Round (gameObject.transform.position.y)) {
-                gems[i].transform.SetParent (gameObject.transform);
+        if (hit.collider != null) {
+            if (Mathf.Round (hit.point.x) == Mathf.Round (gameObject.transform.position.x) &&
+                Mathf.Round (hit.point.y) == Mathf.Round (gameObject.transform.position.y)) {
+                hit.transform.SetParent (gameObject.transform);
+                return hit.transform.GetComponent<Gem> ();
             }
         }
+
+        return null;
     }
 
     private void DestroyComponents () {

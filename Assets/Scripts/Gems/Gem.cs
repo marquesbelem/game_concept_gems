@@ -25,6 +25,9 @@ public class Gem : MonoBehaviour {
         spriteRenderer = GetComponent<SpriteRenderer> ();
     }
 
+    public void IAmDestroy () {
+        Destroy (this.gameObject);
+    }
     public void SetMarkSelected (bool selected) {
         if (selected)
             spriteRenderer.color = new Color (0.3f, 0.3f, 0.3f, 1f);
@@ -46,6 +49,7 @@ public class Gem : MonoBehaviour {
         X = x;
         Y = y;
         gameObject.name = "Gem: " + ID.ToString ();
+        gameObject.tag = "Gem";
     }
 
     private void OnMouseDown () {

@@ -48,13 +48,14 @@ public class Setup : MonoBehaviour {
 
     public void SpwanGem () {
         for (int c = 0; c < Columns; c++) {
-            for (int r = 0; r < 4; r++) {
+            for (int r = 0; r < Row; r++) {
                 float cWidth = c * spacing;
                 Vector3 pos = new Vector3 (cWidth, 7f, 0);
 
                 int idx = Random.Range (0, _gems.Count - 1);
                 GameObject clone = Instantiate (_gems[idx], pos, Quaternion.identity, _goGrid.transform);
                 clone.transform.localScale = new Vector3 (.6f, .6f, .6f);
+                clone.tag = "Clone"; 
             }
         }
     }

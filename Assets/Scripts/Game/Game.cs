@@ -24,7 +24,9 @@ public class Game : MonoBehaviour {
     }
     void Start () {
         Gem.OnMouseOverGemEventHandler += OnMouseOverGem;
-        //InvokeRepeating ("InvokeCheckGrid", 2f, 20f);
+        InvokeRepeating ("UpdateGrid", 0f, 2f);
+        InvokeRepeating ("DestroyClones", 2f, 8f);
+
     }
     private void OnDisable () {
         Gem.OnMouseOverGemEventHandler -= OnMouseOverGem;
@@ -53,15 +55,16 @@ public class Game : MonoBehaviour {
         ChangeRgdbStatus (true);
         _movement = false;
 
-        yield return StartCoroutine (UpdateGrid ());
+        //yield return StartCoroutine (UpdateGrid ());
+        // UpdateGrid ();
 
         yield return StartCoroutine (CheckAllGrid ());
 
-        StartCoroutine (UpdateGrid ());
+        //  UpdateGrid ();
     }
 
     public void ChecksGemsPrize (Gem gem) {
-        Debug.Log ("ChecksGemsPrize");
+        // Debug.Log ("ChecksGemsPrize");
         int row = Setup.Instance.Row;
         int columns = Setup.Instance.Columns;
         int count = 0;
@@ -89,7 +92,7 @@ public class Game : MonoBehaviour {
             _spawn = true;
         }
 
-       /* int down = gem.Y - 1;
+        int down = gem.Y - 1;
         int up = gem.Y + 1;
 
         while (down >= 0 && Grid[gem.X, down].ID == gem.ID) {
@@ -108,10 +111,10 @@ public class Game : MonoBehaviour {
 
             _matchsY.Clear ();
             _spawn = true;
-        }*/
+        }
     }
 
-    IEnumerator UpdateGrid () {
+    void UpdateGrid () {
 
         int row = Setup.Instance.Row;
         int columns = Setup.Instance.Columns;
@@ -121,16 +124,15 @@ public class Game : MonoBehaviour {
                 string name = "[" + c + "][" + r + "]";
 
                 GameObject container = GameObject.Find (name);
-                container.GetComponent<Container> ().UpdateMineGem ();
-
-                yield return new WaitForSeconds (.02f);
-                Gem gem = container.GetComponent<Container> ().MineGem ();
-                gem.UpdatePosition (c, r);
-                Grid[c, r] = gem;
+                Gem gem = container.GetComponent<Container> ().UpdateMineGem ();
+                if (gem != null) {
+                    gem.UpdatePosition (c, r);
+                    Grid[c, r] = gem;
+                }
             }
         }
 
-        Debug.Log ("Update Grid");
+        // Debug.Log ("Update Grid");
     }
     IEnumerator CheckAllGrid () {
         int row = Setup.Instance.Row;
@@ -142,19 +144,30 @@ public class Game : MonoBehaviour {
         }
 
         yield return new WaitForSeconds (.2f);
-        if (_spawn)
+        if (_spawn) {
+            DestroyClones ();
             Setup.Instance.SpwanGem ();
-        yield return new WaitForSeconds (10f);
+        }
+        yield return new WaitForSeconds (1f);
         _spawn = false;
-        Debug.Log ("Logo apos do return CheckALL grid");
+        // Debug.Log ("Logo apos do return CheckALL grid");
     }
 
     private void InvokeCheckGrid () {
         StartCoroutine (CheckAllGrid ());
 
-        StartCoroutine (UpdateGrid ());
+        // StartCoroutine (UpdateGrid ());
     }
 
+    private void DestroyClones () {
+        Debug.Log ("Get Clones");
+        GameObject[] clones = GameObject.FindGameObjectsWithTag ("Clone");
+
+        for (int i = 0; i < clones.Length; i++) {
+            if (clones[i].transform.position.y > 4)
+                clones[i].GetComponent<Gem> ().IAmDestroy ();
+        }
+    }
     void OnMouseOverGem (Gem gem) {
         if (_selected == gem) {
             //clicando duas vezes no mesmo item 
