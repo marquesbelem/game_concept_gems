@@ -11,6 +11,7 @@ public class Setup : MonoBehaviour {
     [SerializeField] private GameObject _goContainer;
     public int Row;
     public int Columns;
+    public float spacing = 1.6f;
     private void Awake () {
         if (Instance == null)
             Instance = this;
@@ -21,23 +22,39 @@ public class Setup : MonoBehaviour {
     void Start () {
         InitGrid ();
     }
+
+    //x => calunas
+    //y => linhas
     void InitGrid () {
-        Game.Instance.Grid = new Gem[Row, Columns];
+        Game.Instance.Grid = new Gem[Columns, Row];
 
-        for (int r = 0; r < Row; r++) {
-            for (int c = 0; c < Columns; c++) {
+        for (int c = 0; c < Columns; c++) {
+            for (int r = 0; r < Row; r++) {
 
-                float cWidth = c * .8f;
+                float cWidth = c * spacing;
                 Vector3 pos = new Vector3 (cWidth, r, 0);
 
                 GameObject container = Instantiate (_goContainer, pos, Quaternion.identity, _goGrid.transform);
-                container.GetComponent<Container> ().UpdateName (r, c);
+                container.GetComponent<Container> ().UpdateName (c, r);
 
                 int idx = Random.Range (0, _gems.Count - 1);
                 GameObject clone = Instantiate (_gems[idx], container.transform.position, Quaternion.identity, container.transform);
-                clone.GetComponent<Gem> ().UpdatePosition (r, c);
+                clone.GetComponent<Gem> ().UpdatePosition (c, r);
 
-                Game.Instance.Grid[r, c] = container.GetComponent<Container> ().MineGem ();
+                Game.Instance.Grid[c, r] = container.GetComponent<Container> ().MineGem ();
+            }
+        }
+    }
+
+    public void SpwanGem () {
+        for (int c = 0; c < Columns; c++) {
+            for (int r = 0; r < 4; r++) {
+                float cWidth = c * spacing;
+                Vector3 pos = new Vector3 (cWidth, 7f, 0);
+
+                int idx = Random.Range (0, _gems.Count - 1);
+                GameObject clone = Instantiate (_gems[idx], pos, Quaternion.identity, _goGrid.transform);
+                clone.transform.localScale = new Vector3 (.6f, .6f, .6f);
             }
         }
     }

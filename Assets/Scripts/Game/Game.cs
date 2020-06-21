@@ -12,8 +12,10 @@ public class Game : MonoBehaviour {
     private Gem _targetGem;
     private Gem _currentGem;
     private bool _movement;
-    List<Gem> matchsX;
-    List<Gem> matchsY;
+    private List<Gem> _matchsX;
+    private List<Gem> _matchsY;
+    private bool _spawn;
+
     private void Awake () {
         if (Instance == null)
             Instance = this;
@@ -22,106 +24,10 @@ public class Game : MonoBehaviour {
     }
     void Start () {
         Gem.OnMouseOverGemEventHandler += OnMouseOverGem;
+        //InvokeRepeating ("InvokeCheckGrid", 2f, 20f);
     }
     private void OnDisable () {
         Gem.OnMouseOverGemEventHandler -= OnMouseOverGem;
-    }
-
-    public void ChecksGemsPrize () {
-        int row = Setup.Instance.Row;
-        int columns = Setup.Instance.Columns;
-        int count = 0;
-
-        matchsX = new List<Gem> ();
-        matchsY = new List<Gem> ();
-
-        for (int r = 0; r < row; r++) {
-            for (int c = 0; c < columns; c++) {
-                if (c < columns - 1) {
-                    if (Grid[r, c].ID == Grid[r, c + 1].ID) {
-                        if (!matchsX.Contains (Grid[r, c]))
-                            matchsX.Add (Grid[r, c]);
-
-                        matchsX.Add (Grid[r, c + 1]);
-
-                        if (matchsX.Count >= 3) {
-                            foreach (Gem g in matchsX) {
-
-                                Destroy (g.gameObject);
-                            }
-
-                            matchsX.Clear ();
-                        }
-                    }
-                }
-
-                if (r < row - 1) {
-                    if (Grid[r, c].ID == Grid[r + 1, c].ID) {
-                        if (!matchsY.Contains (Grid[r, c]))
-                            matchsY.Add (Grid[r, c]);
-
-                        matchsY.Add (Grid[r + 1, c]);
-
-                        if (matchsY.Count >= 3) {
-                            foreach (Gem g in matchsY)
-                                Destroy (g.gameObject);
-
-                            matchsY.Clear ();
-                        }
-                    }
-                }
-            }
-        }
-
-        /*int left = gem.X - 1;
-        int right = gem.X + 1;
-
-        matchsX = new List<Gem> { gem };
-
-        Debug.Log("ID - " + gem.ID);
-
-        while (left >= 0) {
-            if (Grid[left, gem.Y].ID == gem.ID)
-                matchsX.Add (Grid[left, gem.Y]);
-
-            left--;
-        }
-
-        while (right < row) {
-            if (Grid[right, gem.Y].ID == gem.ID)
-                matchsX.Add (Grid[right, gem.Y]);
-
-            right++;
-        }
-
-        Debug.Log ("MatchsX count: " + matchsX.Count);
-        if (matchsX.Count >= 2) {
-            Debug.Log ("X Combinou");
-        }
-
-        int down = gem.Y - 1;
-        int up = gem.Y + 1;
-
-        matchsY = new List<Gem> { gem };
-
-        while (down >= 0) {
-            if (Grid[gem.X, down].ID == gem.ID)
-                matchsY.Add (Grid[gem.X, down]);
-
-            down--;
-        }
-
-        while (up < row) {
-            if (Grid[gem.X, up].ID == gem.ID)
-                matchsY.Add (Grid[gem.X, up]);
-
-            up++;
-        }
-
-        Debug.Log ("MatchsY count: " + matchsY.Count);
-        if (matchsY.Count >= 2) {
-            Debug.Log ("Y Combinou");
-        }*/
     }
 
     private void Update () {
@@ -147,28 +53,108 @@ public class Game : MonoBehaviour {
         ChangeRgdbStatus (true);
         _movement = false;
 
-        yield return UpdateGrid ();
-        //ChecksGemsPrize ();
+        yield return StartCoroutine (UpdateGrid ());
+
+        yield return StartCoroutine (CheckAllGrid ());
+
+        StartCoroutine (UpdateGrid ());
+    }
+
+    public void ChecksGemsPrize (Gem gem) {
+        Debug.Log ("ChecksGemsPrize");
+        int row = Setup.Instance.Row;
+        int columns = Setup.Instance.Columns;
+        int count = 0;
+
+        _matchsX = new List<Gem> { gem };
+        _matchsY = new List<Gem> { gem };
+
+        int left = gem.X - 1;
+        while (left >= 0 && Grid[left, gem.Y].ID == gem.ID) {
+            _matchsX.Add (Grid[left, gem.Y]);
+            left--;
+        }
+
+        int right = gem.X + 1;
+        while (right < columns && Grid[right, gem.Y].ID == gem.ID) {
+            _matchsX.Add (Grid[right, gem.Y]);
+            right++;
+        }
+
+        if (_matchsX.Count >= 3) {
+            foreach (Gem g in _matchsX)
+                Destroy (g.gameObject);
+
+            _matchsX.Clear ();
+            _spawn = true;
+        }
+
+       /* int down = gem.Y - 1;
+        int up = gem.Y + 1;
+
+        while (down >= 0 && Grid[gem.X, down].ID == gem.ID) {
+            _matchsY.Add (Grid[gem.X, down]);
+            down--;
+        }
+
+        while (up < row && Grid[gem.X, up].ID == gem.ID) {
+            _matchsY.Add (Grid[gem.X, up]);
+            up++;
+        }
+
+        if (_matchsY.Count >= 3) {
+            foreach (Gem g in _matchsY)
+                Destroy (g.gameObject);
+
+            _matchsY.Clear ();
+            _spawn = true;
+        }*/
     }
 
     IEnumerator UpdateGrid () {
+
         int row = Setup.Instance.Row;
         int columns = Setup.Instance.Columns;
 
-        for (int r = 0; r < row; r++) {
-            for (int c = 0; c < columns; c++) {
-                string name = "[" + r + "][" + c + "]";
+        for (int c = 0; c < columns; c++) {
+            for (int r = 0; r < row; r++) {
+                string name = "[" + c + "][" + r + "]";
 
                 GameObject container = GameObject.Find (name);
                 container.GetComponent<Container> ().UpdateMineGem ();
 
-                yield return new WaitForSeconds (.5f);
+                yield return new WaitForSeconds (.02f);
                 Gem gem = container.GetComponent<Container> ().MineGem ();
-                gem.UpdatePosition (r, c);
-                Game.Instance.Grid[r, c] = gem;
+                gem.UpdatePosition (c, r);
+                Grid[c, r] = gem;
             }
         }
+
+        Debug.Log ("Update Grid");
     }
+    IEnumerator CheckAllGrid () {
+        int row = Setup.Instance.Row;
+        int columns = Setup.Instance.Columns;
+        for (int c = 0; c < columns; c++) {
+            for (int r = 0; r < row; r++) {
+                ChecksGemsPrize (Grid[c, r]);
+            }
+        }
+
+        yield return new WaitForSeconds (.2f);
+        if (_spawn)
+            Setup.Instance.SpwanGem ();
+        yield return new WaitForSeconds (10f);
+        _spawn = false;
+        Debug.Log ("Logo apos do return CheckALL grid");
+    }
+
+    private void InvokeCheckGrid () {
+        StartCoroutine (CheckAllGrid ());
+
+        StartCoroutine (UpdateGrid ());
+    }
+
     void OnMouseOverGem (Gem gem) {
         if (_selected == gem) {
             //clicando duas vezes no mesmo item 

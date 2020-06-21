@@ -27,14 +27,14 @@ public class Gem : MonoBehaviour {
 
     public void SetMarkSelected (bool selected) {
         if (selected)
-            spriteRenderer.color =  new Color(0.3f, 0.3f, 0.3f, 1f); 
+            spriteRenderer.color = new Color (0.3f, 0.3f, 0.3f, 1f);
         else
             spriteRenderer.color = new Color (255f, 255f, 255f, 1f);
     }
 
     public void SetMarkChoices (bool selected) {
         if (selected)
-            spriteRenderer.color =  new Color(0.6f, 0.9f, 0.3f, 1f); 
+            spriteRenderer.color = new Color (0.6f, 0.9f, 0.3f, 1f);
         else
             spriteRenderer.color = new Color (255f, 255f, 255f, 1f);
     }

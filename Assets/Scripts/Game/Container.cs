@@ -15,7 +15,12 @@ public class Container : MonoBehaviour {
     }
 
     public Gem MineGem () {
-        return gameObject.transform.GetChild (0).GetComponent<Gem> ();
+        if (gameObject.transform.childCount > 0)
+            return gameObject.transform.GetChild (0).GetComponent<Gem> ();
+        else {
+            UpdateMineGem ();
+            return gameObject.transform.GetChild (0).GetComponent<Gem> ();
+        }
     }
 
     public void UpdateMineGem () {
