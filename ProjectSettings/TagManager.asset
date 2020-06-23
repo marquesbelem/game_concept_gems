@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Gem
   - Container
+  - Clone
   layers:
   - Default
   - TransparentFX

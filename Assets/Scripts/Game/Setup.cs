@@ -12,6 +12,8 @@ public class Setup : MonoBehaviour {
     public int Row;
     public int Columns;
     public float spacing = 1.6f;
+    public List<float> PostionsSpawn;
+
     private void Awake () {
         if (Instance == null)
             Instance = this;
@@ -25,7 +27,7 @@ public class Setup : MonoBehaviour {
 
     //x => calunas
     //y => linhas
-    void InitGrid () {
+    public void InitGrid () {
         Game.Instance.Grid = new Gem[Columns, Row];
 
         for (int c = 0; c < Columns; c++) {
@@ -47,17 +49,16 @@ public class Setup : MonoBehaviour {
     }
 
     public void SpwanGem () {
-        for (int c = 0; c < Columns; c++) {
-            for (int r = 0; r < Row; r++) {
-                float cWidth = c * spacing;
-                Vector3 pos = new Vector3 (cWidth, 7f, 0);
 
-                int idx = Random.Range (0, _gems.Count - 1);
-                GameObject clone = Instantiate (_gems[idx], pos, Quaternion.identity, _goGrid.transform);
-                clone.transform.localScale = new Vector3 (.6f, .6f, .6f);
-                clone.tag = "Clone"; 
-            }
+        for (int i = 0; i < PostionsSpawn.Count; i++) {
+
+            Vector3 pos = new Vector3 (PostionsSpawn[i], 7f, 0);
+            int idx = Random.Range (0, _gems.Count - 1);
+            GameObject clone = Instantiate (_gems[idx], pos, Quaternion.identity, _goGrid.transform);
+            clone.transform.localScale = new Vector3 (.6f, .6f, .6f);
         }
+
+        PostionsSpawn.Clear ();
     }
 
 }

@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class Game : MonoBehaviour {
     public static Game Instance { get; private set; }
@@ -15,7 +17,16 @@ public class Game : MonoBehaviour {
     private List<Gem> _matchsX;
     private List<Gem> _matchsY;
     private bool _spawn;
-
+    public int scoreCurrent;
+    public List<int> scorePhase;
+    public int phaseCurrent = 0;
+    private float _time;
+    public Text timeText;
+    public Text scoreText;
+    public Text scorePhaseText;
+    public Text msg;
+    public GameObject panelMsg;
+    private bool _finish;
     private void Awake () {
         if (Instance == null)
             Instance = this;
@@ -23,25 +34,82 @@ public class Game : MonoBehaviour {
             Destroy (gameObject);
     }
     void Start () {
+        _time = Time.time;
         Gem.OnMouseOverGemEventHandler += OnMouseOverGem;
-        InvokeRepeating ("UpdateGrid", 0f, 2f);
-        InvokeRepeating ("DestroyClones", 2f, 8f);
-
+        InvokeRepeating ("InvokeCheckGrid", 3f, 2f);
+        scorePhaseText.text = "/ " + scorePhase[phaseCurrent].ToString ();
     }
     private void OnDisable () {
         Gem.OnMouseOverGemEventHandler -= OnMouseOverGem;
     }
 
     private void Update () {
+
+        Timer ();
+
         if (_movement) {
-            _currentGem.transform.position = Vector2.MoveTowards (_currentGem.transform.position, _posEnd, 2 * Time.deltaTime);
-            _targetGem.transform.position = Vector2.MoveTowards (_targetGem.transform.position, _posStart, 2 * Time.deltaTime);
+            if (_currentGem != null)
+                _currentGem.transform.position = Vector2.MoveTowards (_currentGem.transform.position, _posEnd, 2 * Time.deltaTime);
+            if (_targetGem != null)
+                _targetGem.transform.position = Vector2.MoveTowards (_targetGem.transform.position, _posStart, 2 * Time.deltaTime);
         }
     }
 
+    #region Timer and Phases
+    void Timer () {
+        if (!_finish) {
+            float t = Time.time - _time;
+            string minutos = ((int) t / 60).ToString ();
+            string seconds = (t % 60).ToString ("f0");
+
+            timeText.text = minutos + ":" + seconds;
+
+            if ((int) t / 60 == 2) {
+                _finish = true;
+                panelMsg.SetActive (true);
+                msg.text = "Time is over";
+            }
+
+            CheckPhase ();
+        }
+    }
+
+    void CheckPhase () {
+        if (scoreCurrent >= scorePhase[phaseCurrent]) {
+            scoreCurrent = 0;
+            scoreText.text = scoreCurrent.ToString ();
+
+            if (phaseCurrent == scorePhase.Count - 1) {
+                msg.text = "Completed all the stages";
+                panelMsg.SetActive (true);
+                _finish = true;
+            } else {
+                phaseCurrent++;
+                scorePhaseText.text = "/ " + scorePhase[phaseCurrent].ToString ();
+                _time = Time.time;
+            }
+        }
+    }
+
+    public void RestartGame () {
+        SceneManager.LoadScene ("Game");
+    }
+
+    public void RestartGrid () {
+        Gem[] gems = FindObjectsOfType<Gem> ();
+        for (int i = 0; i < gems.Length; i++) {
+            Destroy (gems[i].gameObject);
+        }
+
+        Setup.Instance.InitGrid ();
+    }
+    #endregion
+
+    #region  Checks Grid and Gem
     void ChangeRgdbStatus (bool status) {
-        foreach (Gem gem in Grid) {
-            gem.ChangeSimulated (status);
+        Gem[] gems = FindObjectsOfType<Gem> ();
+        for (int i = 0; i < gems.Length; i++) {
+            gems[i].ChangeSimulated (status);
         }
     }
 
@@ -49,22 +117,27 @@ public class Game : MonoBehaviour {
         ChangeRgdbStatus (false);
         _movement = true;
         _selected.SetMarkSelected (false);
-
+        AudioManager.Instance.PlaySound ("Swap");
         yield return new WaitForSeconds (1f);
 
         ChangeRgdbStatus (true);
         _movement = false;
 
-        //yield return StartCoroutine (UpdateGrid ());
-        // UpdateGrid ();
+        UpdateGrid ();
 
-        yield return StartCoroutine (CheckAllGrid ());
+        ChecksGemsPrize (_currentGem);
+        ChecksGemsPrize (_targetGem);
 
-        //  UpdateGrid ();
+        yield return new WaitForSeconds (.2f);
+        if (_spawn)
+            Setup.Instance.SpwanGem ();
+
+        yield return new WaitForSeconds (1f);
+        _spawn = false;
+
     }
 
     public void ChecksGemsPrize (Gem gem) {
-        // Debug.Log ("ChecksGemsPrize");
         int row = Setup.Instance.Row;
         int columns = Setup.Instance.Columns;
         int count = 0;
@@ -85,8 +158,15 @@ public class Game : MonoBehaviour {
         }
 
         if (_matchsX.Count >= 3) {
-            foreach (Gem g in _matchsX)
-                Destroy (g.gameObject);
+            foreach (Gem g in _matchsX) {
+                if (g != null) {
+                    Setup.Instance.PostionsSpawn.Add (g.gameObject.transform.position.x);
+                    Destroy (g.gameObject);
+                    AudioManager.Instance.PlaySound ("Clear");
+                    scoreCurrent = scoreCurrent + 5;
+                    scoreText.text = scoreCurrent.ToString ();
+                }
+            }
 
             _matchsX.Clear ();
             _spawn = true;
@@ -106,8 +186,15 @@ public class Game : MonoBehaviour {
         }
 
         if (_matchsY.Count >= 3) {
-            foreach (Gem g in _matchsY)
-                Destroy (g.gameObject);
+            foreach (Gem g in _matchsY) {
+                if (g != null) {
+                    Setup.Instance.PostionsSpawn.Add (g.gameObject.transform.position.x);
+                    Destroy (g.gameObject);
+                    AudioManager.Instance.PlaySound ("Clear");
+                    scoreCurrent = scoreCurrent + 5;
+                    scoreText.text = scoreCurrent.ToString ();
+                }
+            }
 
             _matchsY.Clear ();
             _spawn = true;
@@ -131,10 +218,9 @@ public class Game : MonoBehaviour {
                 }
             }
         }
-
-        // Debug.Log ("Update Grid");
     }
     IEnumerator CheckAllGrid () {
+
         int row = Setup.Instance.Row;
         int columns = Setup.Instance.Columns;
         for (int c = 0; c < columns; c++) {
@@ -144,35 +230,24 @@ public class Game : MonoBehaviour {
         }
 
         yield return new WaitForSeconds (.2f);
-        if (_spawn) {
-            DestroyClones ();
+        if (_spawn)
             Setup.Instance.SpwanGem ();
-        }
+
         yield return new WaitForSeconds (1f);
         _spawn = false;
-        // Debug.Log ("Logo apos do return CheckALL grid");
     }
 
     private void InvokeCheckGrid () {
+        UpdateGrid ();
         StartCoroutine (CheckAllGrid ());
-
-        // StartCoroutine (UpdateGrid ());
     }
 
-    private void DestroyClones () {
-        Debug.Log ("Get Clones");
-        GameObject[] clones = GameObject.FindGameObjectsWithTag ("Clone");
-
-        for (int i = 0; i < clones.Length; i++) {
-            if (clones[i].transform.position.y > 4)
-                clones[i].GetComponent<Gem> ().IAmDestroy ();
-        }
-    }
     void OnMouseOverGem (Gem gem) {
         if (_selected == gem) {
             //clicando duas vezes no mesmo item 
             _selected.SetMarkSelected (false);
             _selected = null;
+            AudioManager.Instance.PlaySound ("Select");
             return;
         }
 
@@ -181,6 +256,7 @@ public class Game : MonoBehaviour {
             _selected = gem;
             _posStart = _selected.transform.position;
             _selected.SetMarkSelected (true);
+            AudioManager.Instance.PlaySound ("Select");
 
         } else {
 
@@ -203,5 +279,5 @@ public class Game : MonoBehaviour {
             _selected = null;
         }
     }
-
+    #endregion
 }

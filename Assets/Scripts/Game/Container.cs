@@ -10,12 +10,7 @@ public class Container : MonoBehaviour {
         rgdb = GetComponent<Rigidbody2D> ();
         collider2D = GetComponent<Collider2D> ();
         DestroyComponents ();
-        // InvokeRepeating ("UpdateMineGem", 2f, 5f);
     }
-
-    /* private void Update () {
-          UpdateMineGem ();
-     }*/
     public void UpdateName (int x, int y) {
         gameObject.name = "[" + x + "][" + y + "]";
     }
@@ -34,6 +29,7 @@ public class Container : MonoBehaviour {
             if (Mathf.Round (hit.point.x) == Mathf.Round (gameObject.transform.position.x) &&
                 Mathf.Round (hit.point.y) == Mathf.Round (gameObject.transform.position.y)) {
                 hit.transform.SetParent (gameObject.transform);
+                hit.transform.position = gameObject.transform.position;
                 return hit.transform.GetComponent<Gem> ();
             }
         }
