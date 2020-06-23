@@ -1,3 +1,3 @@
 # game_concept_gems
 
-Projeto teste para uma vaga
+Game estilo Candy Crush
