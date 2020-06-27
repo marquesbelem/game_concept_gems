@@ -1,3 +1,3 @@
-# game_concept_gems
+# Game Concept Gemns
 
 Game estilo Candy Crush
